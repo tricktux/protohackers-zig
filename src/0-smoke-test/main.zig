@@ -75,29 +75,19 @@ fn handle_connection(connection: std.net.Server.Connection) void {
 
     while (true) {
         debug("\twaiting for some data...", .{});
-        const line = sri.takeDelimiter('\n') catch |err| switch (err) {
-            error.ReadFailed => {
-                debug("\tERROR: error reading failed... closing this connection", .{});
+
+        _ = sri.stream(swi, std.Io.Limit.limited(buff_size)) catch |err| switch (err) {
+            error.EndOfStream => {
+                debug("\tClient closed this connection", .{});
                 return;
             },
-            error.StreamTooLong => {
+            else => {
                 // Please allocate more buffer space
-                debug("\tERROR: delimiter not found within buf capacity... closing this connection", .{});
+                debug("\tERROR: We got a read/write error... closing this connection", .{});
                 return;
-            }
+            },
         };
 
-        if (line == null) {
-            debug("\tConnection closed by client.", .{});
-            return;
-        }
-        debug("\tGot: {s}", .{line.?});
-
-        // Send the data back
-        swi.writeAll(line.?) catch |err| {
-            debug("\tERROR: error writeAll function {}... closing this connection", .{err});
-            return;
-        };
         swi.flush() catch |err| {
             debug("\tERROR: error flushing data {}... closing this connection", .{err});
             return;
