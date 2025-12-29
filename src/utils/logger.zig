@@ -12,7 +12,7 @@ pub fn init() !void {
     if (log_file != null) return;
 
     const timestamp = std.time.timestamp();
-    const filename = try std.fmt.bufPrint(&buf, "/tmp/speed-daemon-{d}.txt", .{timestamp});
+    const filename = try std.fmt.bufPrint(&buf, "/tmp/0-smoke-test-{d}.txt", .{timestamp});
 
     log_file = try std.fs.cwd().createFile(filename, .{});
     file_writer = std.fs.File.Writer.init(log_file.?, &file_buf);
@@ -44,15 +44,11 @@ pub fn customLogFn(
 
     const prefix = "[" ++ comptime level.asText() ++ "] " ++ scope_prefix;
 
-    // Write to stderr
-    // const stderr = std.io.getStdErr().writer();
-    // stderr.print(prefix ++ format ++ "\n", args) catch {};
-
-    // if (log_file == null) return;
+    if (log_file == null) return;
 
     // Write to log file if open
-    // mutex.lock();
-    // defer mutex.unlock();
+    mutex.lock();
+    defer mutex.unlock();
 
     // Get current timestamp with millisecond precision
     const nano_timestamp = std.time.nanoTimestamp();
