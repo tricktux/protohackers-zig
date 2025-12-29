@@ -28,18 +28,18 @@ pub fn build(b: *std.Build) void {
     // to our consumers. We must give it a name because a Zig package can expose
     // multiple modules and consumers will need to be able to specify which
     // module they want to access.
-    // const mod = b.addModule("protohackers_zig", .{
-    //     // The root source file is the "entry point" of this module. Users of
-    //     // this module will only be able to access public declarations contained
-    //     // in this file, which means that if you have declarations that you
-    //     // intend to expose to consumers that were defined in other files part
-    //     // of this module, you will have to make sure to re-export them from
-    //     // the root file.
-    //     .root_source_file = b.path("src/root.zig"),
-    //     // Later on we'll use this module as the root module of a test executable
-    //     // which requires us to specify a target.
-    //     .target = target,
-    // });
+    const utils = b.addModule("utils", .{
+        // The root source file is the "entry point" of this module. Users of
+        // this module will only be able to access public declarations contained
+        // in this file, which means that if you have declarations that you
+        // intend to expose to consumers that were defined in other files part
+        // of this module, you will have to make sure to re-export them from
+        // the root file.
+        .root_source_file = b.path("src/utils/root.zig"),
+        // Later on we'll use this module as the root module of a test executable
+        // which requires us to specify a target.
+        .target = target,
+    });
 
     // Here we define an executable. An executable needs to have a root module
     // which needs to expose a `main` function. While we could add a main function
@@ -72,15 +72,14 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             // List of modules available for import in source files part of the
             // root module.
-            // .imports = &.{
-            //     // Here "protohackers_zig" is the name you will use in your source code to
-            //     // import this module (e.g. `@import("protohackers_zig")`). The name is
-            //     // repeated because you are allowed to rename your imports, which
-            //     // can be extremely useful in case of collisions (which can happen
-            //     // importing modules from different packages).
-            //     // .{ .name = "protohackers_zig", .module = mod },
-            //     .{ .name = "protohackers_zig", .module = null },
-            // },
+            .imports = &.{
+                // Here "protohackers_zig" is the name you will use in your source code to
+                // import this module (e.g. `@import("protohackers_zig")`). The name is
+                // repeated because you are allowed to rename your imports, which
+                // can be extremely useful in case of collisions (which can happen
+                // importing modules from different packages).
+                .{ .name = "utils", .module = utils },
+            },
         }),
     });
 

@@ -3,7 +3,8 @@ const builtin = @import("builtin");
 
 pub var log_file: ?std.fs.File = null;
 pub var mutex = std.Thread.Mutex{};
-pub var buf: [2046]u8 = undefined;
+pub var file_buf: [4096]u8 = undefined;
+pub var buf: [4096]u8 = undefined;
 pub var file_writer: std.fs.File.Writer = undefined;
 
 // TODO: pass log full path here
@@ -14,8 +15,7 @@ pub fn init() !void {
     const filename = try std.fmt.bufPrint(&buf, "/tmp/speed-daemon-{d}.txt", .{timestamp});
 
     log_file = try std.fs.cwd().createFile(filename, .{});
-    file_writer = std.fs.File.Writer.init(log_file.?, &buf);
-    try file_writer.interface.print("=== Log started at timestamp {d} ===\n", .{timestamp});
+    file_writer = std.fs.File.Writer.init(log_file.?, &file_buf);
 }
 
 pub fn deinit() void {
@@ -48,11 +48,11 @@ pub fn customLogFn(
     // const stderr = std.io.getStdErr().writer();
     // stderr.print(prefix ++ format ++ "\n", args) catch {};
 
-    if (log_file != null) return;
+    // if (log_file == null) return;
 
     // Write to log file if open
-    mutex.lock();
-    defer mutex.unlock();
+    // mutex.lock();
+    // defer mutex.unlock();
 
     // Get current timestamp with millisecond precision
     const nano_timestamp = std.time.nanoTimestamp();
@@ -66,4 +66,6 @@ pub fn customLogFn(
     file_writer.interface.print("[{d}.{d:0>3}] {s}\n", .{ seconds, milliseconds, formatted_msg }) catch {
         return;
     };
+
+    file_writer.interface.flush() catch { return; };
 }
