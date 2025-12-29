@@ -1,10 +1,10 @@
 const std = @import("std");
-const protohackers_zig = @import("protohackers_zig");
+// const protohackers_zig = @import("protohackers_zig");
 
 pub fn main() !void {
     // Prints to stderr, ignoring potential errors.
     std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
-    try protohackers_zig.bufferedPrint();
+    // try protohackers_zig.bufferedPrint();
 }
 
 test "simple test" {
