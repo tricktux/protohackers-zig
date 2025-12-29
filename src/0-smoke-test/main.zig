@@ -7,7 +7,7 @@ const debug = std.log.debug;
 // Constants
 const name: []const u8 = "0.0.0.0";
 const port = 18888;
-const buff_size = 1048576;
+const buff_size = 4096;
 
 // Configure logging at the root level
 pub const std_options: std.Options = .{
@@ -62,21 +62,44 @@ pub fn main() !void {
 }
 
 fn handle_connection(connection: std.net.Server.Connection) void {
-    var data: [buff_size]u8 = undefined;
+    var read_buff: [buff_size]u8 = undefined;
+    var write_buff: [buff_size]u8 = undefined;
     const stream = connection.stream;
     defer stream.close();
 
+    // Initialize Reader and Writer
+    var reader = stream.reader(&read_buff);
+    const sri = reader.interface();
+    var writer = stream.writer(&write_buff);
+    var swi = &writer.interface;
+
     while (true) {
         debug("\twaiting for some data...", .{});
-        const bytes = stream.read(&data) catch 0;
-        if (bytes == 0) {
-            debug("\tERROR: error, or closing request either way... closing this connection", .{});
+        const line = sri.takeDelimiter('\n') catch |err| switch (err) {
+            error.ReadFailed => {
+                debug("\tERROR: error reading failed... closing this connection", .{});
+                return;
+            },
+            error.StreamTooLong => {
+                // Please allocate more buffer space
+                debug("\tERROR: delimiter not found within buf capacity... closing this connection", .{});
+                return;
+            }
+        };
+
+        if (line == null) {
+            debug("\tConnection closed by client.", .{});
             return;
         }
+        debug("\tGot: {s}", .{line.?});
 
-        debug("\treceived some bytes = {}!!", .{bytes});
-        stream.writeAll(data[0..bytes]) catch |err| {
-            debug("\tERROR: error sendAll function {}... closing this connection", .{err});
+        // Send the data back
+        swi.writeAll(line.?) catch |err| {
+            debug("\tERROR: error writeAll function {}... closing this connection", .{err});
+            return;
+        };
+        swi.flush() catch |err| {
+            debug("\tERROR: error flushing data {}... closing this connection", .{err});
             return;
         };
     }
