@@ -3,7 +3,7 @@ const builtin = @import("builtin");
 
 pub var log_file: ?std.fs.File = null;
 pub var mutex = std.Thread.Mutex{};
-pub var file_buf: [4096]u8 = undefined;
+pub var file_buf: [8192]u8 = undefined;
 pub var buf: [4096]u8 = undefined;
 pub var file_writer: std.fs.File.Writer = undefined;
 
@@ -56,6 +56,7 @@ pub fn customLogFn(
     const milliseconds = @divFloor(@mod(nano_timestamp, std.time.ns_per_s), std.time.ns_per_ms);
 
     // Format the log message
+    // Consolidate this `bufPrint` with the `interface.print` to get rid of `buf`
     const formatted_msg = std.fmt.bufPrint(&buf, prefix ++ format, args) catch "bufPrint failed!!!";
 
     // Write with timestamp including milliseconds
